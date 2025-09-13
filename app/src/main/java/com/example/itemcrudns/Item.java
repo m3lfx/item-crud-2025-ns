@@ -8,6 +8,14 @@ public class Item {
     private String image_url;
     private Integer item_id;
 
+    public Item(String description, String sell_price, String cost_price, String image_url, Integer item_id) {
+        this.description = description;
+        this.sell_price = sell_price;
+        this.cost_price = cost_price;
+        this.image_url = image_url;
+        this.item_id = item_id;
+    }
+
     public String getCost_price() {
         return cost_price;
     }

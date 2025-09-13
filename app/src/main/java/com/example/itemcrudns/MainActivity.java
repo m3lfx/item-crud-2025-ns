@@ -211,6 +211,102 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String urlString = mJSONURLString+"/"+itemId.getText();
+                Log.i("url:", urlString);
+                JSONObject jsonItem = new JSONObject();
+                try {
+                    jsonItem.put("description", desc.getText());
+                    jsonItem.put("sell_price", sell.getText());
+                    jsonItem.put("cost_price", cost.getText());
+
+//                    jsonItem.put("img_path",fileName);
+                    jsonItem.put("uploads", getStringImage(bitmap));
+                    Log.d("tag", jsonItem.toString(4));
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                // Initialize a new RequestQueue instance
+                RequestQueue requestQueue = Volley.newRequestQueue(mContext);
+                // Initialize a new JsonObjectRequest instance
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                        Request.Method.PUT,
+                        urlString,
+                        jsonItem,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try{
+                                    String status = response.getString("message");
+                                    Toast.makeText(getApplicationContext(),status, Toast.LENGTH_LONG).show();
+
+                                }catch (JSONException e){
+                                    e.printStackTrace();
+                                }
+                            }
+                        },
+                        new Response.ErrorListener(){
+                            @Override
+                            public void onErrorResponse(VolleyError error){
+                                // Do something when error occurred
+                                Log.e("error :",error.getMessage().toString());
+                            }
+                        });
+                // Add JsonObjectRequest to the RequestQueue
+                requestQueue.add(jsonObjectRequest);
+            }
+        });
+        delete.setOnClickListener(view -> {
+
+            String urlString = mJSONURLString+"/"+itemId.getText();
+            Log.i("url",urlString);
+
+            // Initialize a new RequestQueue instance
+            RequestQueue requestQueue = Volley.newRequestQueue(mContext);
+
+            // Initialize a new JsonObjectRequest instance
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                    Request.Method.DELETE,
+                    urlString,
+                    null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            // Do something with response
+                            // Process the JSON
+                            try{
+                                String status = response.getString("status");
+                                Toast.makeText(getApplicationContext(),status, Toast.LENGTH_LONG).show();
+                            }catch (JSONException e){
+                                e.printStackTrace();
+                            }
+                        }
+                    },
+                    new Response.ErrorListener(){
+                        @Override
+                        public void onErrorResponse(VolleyError error){
+                            // Do something when error occurred
+                            Log.e("error :",error.getMessage());
+                        }
+                    }
+            ) ;
+            // Add JsonObjectRequest to the RequestQueue
+            requestQueue.add(jsonObjectRequest);
+        });
+        btnView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(mContext, ListActivity.class);
+//                intent.putExtra("access_token",accessToken);
+                startActivity(intent);
+            }
+
+        });
+
+
+
     }
 
     private String getStringImage(Bitmap bmp){
