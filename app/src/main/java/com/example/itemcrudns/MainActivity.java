@@ -6,11 +6,13 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
@@ -22,20 +24,25 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     private Context mContext;
-    private final String mJSONURLString = "http://172.34.98.64:8000/item";
+    private final String mJSONURLString = "http://172.34.98.64:8000/api/items";
     private final String imgUrl = "http://172.34.98.64:8000/storage/";
     private Bitmap bitmap;
 
@@ -148,6 +155,70 @@ public class MainActivity extends AppCompatActivity {
             requestQueue.add(jsonObjectRequest);
         });
 
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i("url","url"+ mJSONURLString);
+                JSONObject jsonItem = new JSONObject();
+                try {
+                    jsonItem.put("description", desc.getText());
+                    jsonItem.put("sell_price", sell.getText());
+                    jsonItem.put("cost_price", cost.getText());
+//                    jsonItem.put("img_path",imgName.getText().toString().trim());
+//                    jsonItem.put("img_path",fileName);
+                    jsonItem.put("uploads", getStringImage(bitmap));
+                    //Log.i("url","url"+ jsonItem.toString());
+                    Log.d("tag", jsonItem.toString(4));
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                // Initialize a new RequestQueue instance
+                RequestQueue requestQueue = Volley.newRequestQueue(mContext);
+
+                // Initialize a new JsonObjectRequest instance
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                        Request.Method.POST,
+                        mJSONURLString,
+                        jsonItem,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                try{
+                                    String status = response.getString("status");
+                                    String message = response.getString("message");
+                                    Toast.makeText(getApplicationContext(),message, Toast.LENGTH_LONG).show();
+
+                                }catch (JSONException e){
+                                    e.printStackTrace();
+                                }
+                            }
+                        },
+                        new Response.ErrorListener(){
+                            @Override
+                            public void onErrorResponse(VolleyError error){
+                                // Do something when error occurred
+                                Toast.makeText(getApplicationContext(),error.toString(), Toast.LENGTH_LONG).show();
+                                Log.i("error", error.toString());
+                            }
+                        });
+                jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
+                        0,
+                        DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                        DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+                // Add JsonObjectRequest to the RequestQueue
+                requestQueue.add(jsonObjectRequest);
+            }
+        });
+
+    }
+
+    private String getStringImage(Bitmap bmp){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedImage;
     }
 
 
